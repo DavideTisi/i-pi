@@ -16,6 +16,7 @@ from ipi.engine.motion import Motion
 from ipi.utils.depend import *
 from ipi.engine.thermostats import Thermostat
 from ipi.engine.barostats import Barostat, BaroRGB
+from ipi.engine.potentiostats import Potentiostat
 from ipi.utils.messages import warning, verbosity
 
 
@@ -56,6 +57,7 @@ class Dynamics(Motion):
         nmts=None,
         efield=None,
         bec=None,
+        potentiostat=None,
     ):
         """Initialises a "dynamics" motion object.
 
@@ -91,6 +93,12 @@ class Dynamics(Motion):
             self.barostat = Barostat()
         else:
             self.barostat = barostat
+
+        # electrode-charge dynamics (e.g. FDT thermopotentiostat)
+        if potentiostat is None:
+            self.potentiostat = Potentiostat()
+        else:
+            self.potentiostat = potentiostat
         self.enstype = mode
         if self.enstype == "nve":
             self.integrator = NVEIntegrator()
@@ -189,9 +197,11 @@ class Dynamics(Motion):
         )
 
         self.integrator.bind(self)
+        self.potentiostat.bind(self)
 
         self.ensemble.add_econs(self.thermostat._ethermo)
         self.ensemble.add_econs(self.barostat._ebaro)
+        self.ensemble.add_econs(self.potentiostat._ework)
 
         # adds the potential, kinetic energy and the cell Jacobian to the ensemble
         self.ensemble.add_xlpot(self.barostat._pot)
@@ -240,6 +250,10 @@ class Dynamics(Motion):
     def step(self, step=None):
         """Advances the dynamics by one time step"""
 
+        # The electrode charge is updated first, from the potential at the
+        # current positions (already evaluated in the previous step); the new
+        # charge is used at the next evaluation of the electrode forcefield.
+        self.potentiostat.step()
         self.integrator.step(step)
         self.ensemble.time += self.dt  # increments internal time
 

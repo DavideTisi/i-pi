@@ -7,6 +7,7 @@
 import numpy as np
 import ipi.engine.thermostats
 import ipi.engine.barostats
+import ipi.engine.potentiostats
 from ipi.utils.inputvalue import (
     InputDictionary,
     InputAttribute,
@@ -16,6 +17,7 @@ from ipi.utils.inputvalue import (
 )
 from ipi.inputs.barostats import InputBaro
 from ipi.inputs.thermostats import InputThermo
+from ipi.inputs.potentiostats import InputPotentiostat
 
 __all__ = ["InputDynamics"]
 
@@ -91,6 +93,15 @@ class InputDynamics(InputDictionary):
                 "help": InputBaro.default_help,
             },
         ),
+        "potentiostat": (
+            InputPotentiostat,
+            {
+                "default": input_default(
+                    factory=ipi.engine.potentiostats.Potentiostat
+                ),
+                "help": InputPotentiostat.default_help,
+            },
+        ),
         "timestep": (
             InputValue,
             {
@@ -129,6 +140,7 @@ class InputDynamics(InputDictionary):
         self.timestep.store(dyn.dt)
         self.thermostat.store(dyn.thermostat)
         self.barostat.store(dyn.barostat)
+        self.potentiostat.store(dyn.potentiostat)
         self.nmts.store(dyn.nmts)
         self.splitting.store(dyn.splitting)
 

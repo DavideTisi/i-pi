@@ -121,6 +121,17 @@ class ForceField:
         self._doloop = [False]
         self._threadlock = threading.Lock()
 
+    def set_parameter(self, name, value):
+        """Sets a forcefield parameter that may change during the simulation
+        (e.g. the electrode charge propagated by a potentiostat).
+
+        The parameters are sent to socket and MPI clients in the INIT string,
+        which is rebuilt every time a request is queued: a client that needs
+        the updated value has to answer NEEDINIT before each evaluation.
+        """
+
+        self.pars[name] = value
+
     def bind(self, output_maker=None):
         """Binds the FF, at present just to allow for
         managed output"""
@@ -549,6 +560,14 @@ class FFDirect(ForceField):
             print(f"Error setting up PES mode {self.pes}")
             print("Error trace: ")
             raise err
+
+    def set_parameter(self, name, value):
+        """Sets a forcefield parameter and forwards it to the PES, if the
+        PES defines update_parameters(**pars)."""
+
+        super().set_parameter(name, value)
+        if hasattr(self.driver, "update_parameters"):
+            self.driver.update_parameters(**{name: value})
 
     def poll(self):
         """Polls the forcefield checking if there are requests that should

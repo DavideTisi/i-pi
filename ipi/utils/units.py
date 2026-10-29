@@ -236,6 +236,21 @@ UnitMap = {
         "atomic_unit": 1.00,
         "v/ang": 0.019446903811441516,  # 0.5291772109/27.2113862459
     },
+    "electric-potential": {  # Hartree / electron charge
+        # 1 V = 1 eV/e = 1/27.2113862459 Hartree/e
+        "": 1.00,
+        "automatic": 1.00,
+        "atomic_unit": 1.00,
+        "volt": 0.036749322175665,
+        "v": 0.036749322175665,
+    },
+    "capacitance": {  # electron charge^2 / Hartree (= e per atomic unit of potential)
+        "": 1.00,
+        "automatic": 1.00,
+        "atomic_unit": 1.00,
+        "e/v": 27.2113862459,  # electrons per volt
+        "farad": 27.2113862459 / 1.602176634e-19,  # 1 F = 1 C/V
+    },
     "electric-dipole": {  # electron charge * Bohr
         "": 1.00,
         "automatic": 1.00,

@@ -344,6 +344,21 @@ class Properties:
                 "help": "The bias applied to the current ensemble",
                 "func": (lambda: self.ensemble.bias.pot / self.beads.nbeads),
             },
+            "electrode_charge": {
+                "dimension": "number",
+                "help": "The number of excess electrons on the electrode, as propagated by the potentiostat.",
+                "func": (lambda: self._get_potentiostat().charge),
+            },
+            "electrode_potential": {
+                "dimension": "electric-potential",
+                "help": "The bead-averaged electrode potential at the current positions and electrode charge.",
+                "func": (lambda: self._get_potentiostat().get_potential()),
+            },
+            "potentiostat_work": {
+                "dimension": "energy",
+                "help": "The energy exchanged with the electrode-charge reservoir of the potentiostat.",
+                "func": (lambda: self._get_potentiostat().ework / self.beads.nbeads),
+            },
             "bweights_component": {
                 "dimension": "",
                 "help": "The weight associated to the one part of the hamiltonian. ",
@@ -1551,6 +1566,15 @@ class Properties:
             softexit.trigger(
                 message=" @ PROPERTIES : the electric field is defined only when using the `eda-nve` or `eda-nvt` ensemble."
             )
+
+    def _get_potentiostat(self):
+        """Returns the active potentiostat, or exits if there is none."""
+        pstat = getattr(self.motion, "potentiostat", None)
+        if pstat is None or not hasattr(pstat, "charge"):
+            softexit.trigger(
+                message=" @ PROPERTIES : electrode properties require a dynamics block with an active <potentiostat>."
+            )
+        return pstat
 
     def get_conserved(self):
         """Returns the conserved quantity of the system."""

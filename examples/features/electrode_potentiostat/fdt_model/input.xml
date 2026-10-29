@@ -1,0 +1,47 @@
+<simulation verbosity='medium' safe_stride='100'>
+  <!-- FDT thermopotentiostat + MTS: the 'electrode' forcefield (stand-in for a
+       constant-charge SJM DFT client) sees the electrode charge and is evaluated
+       once per outer step; the 'nofield' forcefield (stand-in for a universal MLIP)
+       does not see it and propagates the inner steps. -->
+  <output prefix='simulation'>
+    <properties stride='1' filename='out'> [ step, time{femtosecond}, conserved{electronvolt}, temperature{kelvin},
+        potential{electronvolt}, electrode_charge, electrode_potential{volt}, potentiostat_work{electronvolt} ] </properties>
+    <trajectory filename='pos' stride='20' format='xyz'> positions{angstrom} </trajectory>
+    <checkpoint stride='100'/>
+  </output>
+  <total_steps> 2000 </total_steps>
+  <prng> <seed> 31415 </seed> </prng>
+  <ffdirect name='electrode' pbc='false'>
+    <pes> custom </pes> <pes_path> model_electrode.py </pes_path>
+    <parameters> { mode: electrode } </parameters>
+  </ffdirect>
+  <ffdirect name='nofield' pbc='false'>
+    <pes> custom </pes> <pes_path> model_electrode.py </pes_path>
+    <parameters> { mode: nofield } </parameters>
+  </ffdirect>
+  <system>
+    <initialize nbeads='1'>
+      <file mode='xyz'> init.xyz </file>
+      <velocities mode='thermal' units='kelvin'> 300 </velocities>
+    </initialize>
+    <forces>
+      <force forcefield='electrode'> <mts_weights> [1, 0] </mts_weights> </force>
+      <force forcefield='nofield'> <mts_weights> [-1, 1] </mts_weights> </force>
+    </forces>
+    <ensemble> <temperature units='kelvin'> 300 </temperature> </ensemble>
+    <motion mode='dynamics'>
+      <dynamics mode='nvt'>
+        <timestep units='femtosecond'> 2.0 </timestep>
+        <nmts> [1, 4] </nmts>
+        <thermostat mode='langevin'> <tau units='femtosecond'> 100 </tau> </thermostat>
+        <potentiostat mode='fdt' forcefield='electrode'>
+          <phi0 units='volt'> 4.0 </phi0>
+          <capacitance units='e/v'> 0.3 </capacitance>
+          <tau units='femtosecond'> 20 </tau>
+          <charge> 0.0 </charge>
+          <work> canonical </work>
+        </potentiostat>
+      </dynamics>
+    </motion>
+  </system>
+</simulation>
